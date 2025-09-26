@@ -1,9 +1,80 @@
-use anyhow::{Result, bail};
+use anyhow::{Context, Result};
 
-pub(crate) fn part1(_input: &str) -> Result<String> {
-    bail!("Unimplemented")
+pub(crate) fn part1(input: &str) -> Result<String> {
+    let mut calories = parse_calories(input)?;
+    calories.sort_unstable();
+
+    let max_calories = calories.last().expect("There should be at least one elf");
+
+    Ok(format!("{}", max_calories))
 }
 
-pub(crate) fn part2(_input: &str) -> Result<String> {
-    bail!("Unimplemented")
+pub(crate) fn part2(input: &str) -> Result<String> {
+    let mut calories = parse_calories(input)?;
+    calories.sort_unstable();
+
+    // We assume there are at least three elves
+    assert!(calories.len() >= 3);
+
+    let total_top_three_calories: u64 = calories.iter().rev().take(3).sum();
+
+    Ok(format!("{}", total_top_three_calories))
+}
+
+fn parse_calories(input: &str) -> Result<Vec<u64>> {
+    let mut calories = Vec::new();
+
+    let mut acc = 0;
+    for mut line in input.lines() {
+        line = line.trim();
+        if line.is_empty() {
+            calories.push(acc);
+            acc = 0;
+        } else {
+            acc += line
+                .parse::<u64>()
+                .with_context(|| "Expected a number when parsing input")?;
+        }
+    }
+
+    calories.push(acc);
+
+    Ok(calories)
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    const INPUT: &str = r#"1000
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000"#;
+
+    #[test]
+    fn test_part1() -> Result<()> {
+        let solution = part1(INPUT)?;
+        assert_eq!(solution, "24000");
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_part2() -> Result<()> {
+        let solution = part2(INPUT)?;
+        assert_eq!(solution, "45000");
+
+        Ok(())
+    }
 }
