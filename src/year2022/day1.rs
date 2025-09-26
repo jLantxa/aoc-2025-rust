@@ -6,7 +6,7 @@ pub(crate) fn part1(input: &str) -> Result<String> {
 
     let max_calories = calories.last().expect("There should be at least one elf");
 
-    Ok(format!("{}", max_calories))
+    Ok(max_calories.to_string())
 }
 
 pub(crate) fn part2(input: &str) -> Result<String> {
@@ -18,7 +18,7 @@ pub(crate) fn part2(input: &str) -> Result<String> {
 
     let total_top_three_calories: u64 = calories.iter().rev().take(3).sum();
 
-    Ok(format!("{}", total_top_three_calories))
+    Ok(total_top_three_calories.to_string())
 }
 
 fn parse_calories(input: &str) -> Result<Vec<u64>> {

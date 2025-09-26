@@ -3,13 +3,13 @@ use anyhow::{Result, bail};
 pub(crate) fn part1(input: &str) -> Result<String> {
     let score = simulate_strategy_guide_1(input)?;
 
-    Ok(format!("{}", score))
+    Ok(score.to_string())
 }
 
 pub(crate) fn part2(input: &str) -> Result<String> {
     let score = simulate_strategy_guide_2(input)?;
 
-    Ok(format!("{}", score))
+    Ok(score.to_string())
 }
 
 #[derive(Debug, PartialEq)]
