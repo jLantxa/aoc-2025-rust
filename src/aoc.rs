@@ -10,11 +10,11 @@ use crate::{year2022, year2025};
 pub(crate) type SolutionFn = fn(&str) -> Result<String>;
 pub(crate) type DailySolutions = (SolutionFn, SolutionFn);
 
-pub(crate) fn load_input(path: &Path) -> Result<String> {
+fn load_input(path: &Path) -> Result<String> {
     std::fs::read_to_string(path).with_context(|| format!("Could not load input from {path:?}"))
 }
 
-pub(crate) fn load_input_for_day(year: &str, day: u8) -> Result<String> {
+fn load_input_for_day(year: &str, day: u8) -> Result<String> {
     const INPUT_DIR: &str = "input";
     let input_path = PathBuf::from(INPUT_DIR)
         .join(year)
@@ -22,7 +22,7 @@ pub(crate) fn load_input_for_day(year: &str, day: u8) -> Result<String> {
     load_input(&input_path)
 }
 
-pub(crate) fn get_solution(year: &str, day: u8) -> Option<DailySolutions> {
+fn get_solution(year: &str, day: u8) -> Option<DailySolutions> {
     match year {
         "2022" => year2022::get_solution(day),
         "2025" => year2025::get_solution(day),
@@ -31,15 +31,15 @@ pub(crate) fn get_solution(year: &str, day: u8) -> Option<DailySolutions> {
 }
 
 /// Executes a solution part, times it, and prints the result.
-pub(crate) fn print_solution_result(part: u8, func: impl FnOnce() -> Result<String>) {
+fn print_solution_result(part: u8, func: impl FnOnce() -> Result<String>) {
     let start = Instant::now();
     let result = func();
     let elapsed = start.elapsed();
 
     match result {
-        Ok(res) => println!("Part {}: ({:?}) {}", part, elapsed, res),
+        Ok(res) => println!("Part {part}: ({elapsed:?}) {res}"),
         Err(e) => {
-            println!("Part {}: ({:?}) Error: {}", part, elapsed, e);
+            println!("Part {part}: ({elapsed:?}) Error: {e}");
         }
     }
 }
@@ -59,7 +59,7 @@ pub(crate) fn run_all_yearly_solutions(year: &str) {
             }
         };
 
-        println!("\n-- {year}::{day:02} --");
+        println!("-- {year}::{day:02} --");
         print_solution_result(1, || (solutions.0)(&input)); // Part 1
         print_solution_result(2, || (solutions.1)(&input)); // Part 2
         println!();
@@ -72,7 +72,7 @@ pub(crate) fn run_single_solution(year: &str, day: u8, part: Option<u8>) -> Resu
     let input =
         load_input_for_day(year, day).with_context(|| format!("Input for day {day} not found"))?;
 
-    println!("\n-- {year}::{day:02} --");
+    println!("-- {year}::{day:02} --");
 
     if part.is_none() || part == Some(1) {
         print_solution_result(1, || (solution.0)(&input));

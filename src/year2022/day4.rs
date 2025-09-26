@@ -47,7 +47,7 @@ fn parse_ranges(input: &str) -> Result<Vec<(RangeInclusive<u32>, RangeInclusive<
 }
 
 fn range_contains_range(r0: &RangeInclusive<u32>, r1: &RangeInclusive<u32>) -> bool {
-    r0.contains(r1.start()) && r0.contains(r1.end())
+    r0.end() < r1.start() || r0.start() > r1.end()
 }
 
 fn range_overlaps_range(r0: &RangeInclusive<u32>, r1: &RangeInclusive<u32>) -> bool {
