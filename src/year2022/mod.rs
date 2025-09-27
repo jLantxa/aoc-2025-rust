@@ -8,6 +8,7 @@ pub(crate) mod day5;
 pub(crate) mod day6;
 pub(crate) mod day7;
 pub(crate) mod day8;
+pub(crate) mod day9;
 
 pub fn get_solution(day: u8) -> Option<DailySolutions> {
     match day {
@@ -19,6 +20,7 @@ pub fn get_solution(day: u8) -> Option<DailySolutions> {
         6 => Some((day6::part1, day6::part2)),
         7 => Some((day7::part1, day7::part2)),
         8 => Some((day8::part1, day8::part2)),
+        9 => Some((day9::part1, day9::part2)),
         _ => None,
     }
 }
