@@ -5,6 +5,8 @@ mod aoc;
 mod year2022;
 mod year2025;
 
+mod utils;
+
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
 struct Args {
