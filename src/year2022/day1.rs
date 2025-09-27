@@ -1,10 +1,12 @@
 use anyhow::{Context, Result};
 
 pub(crate) fn part1(input: &str) -> Result<String> {
-    let mut calories = parse_calories(input)?;
-    calories.sort_unstable();
+    let calories = parse_calories(input)?;
 
-    let max_calories = calories.last().expect("There should be at least one elf");
+    let max_calories = calories
+        .iter()
+        .max()
+        .expect("There should be at least one elf");
 
     Ok(max_calories.to_string())
 }
