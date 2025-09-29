@@ -47,6 +47,10 @@ impl<T: Default + Copy> Grid<T> {
         self.height += 1;
     }
 
+    pub fn is_within_bounds(&self, i: usize, j: usize) -> bool {
+        i < self.width && j < self.height
+    }
+
     pub fn from_input_with<F>(input: &str, mapper: F) -> Result<Self>
     where
         F: Fn(char) -> T,
