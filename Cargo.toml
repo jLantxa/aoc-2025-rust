@@ -3,8 +3,12 @@ name = "aoc-2025-rust"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "setup"
+path = "utils/setup.rs"
+
 [dependencies]
-anyhow = "1.0.99"
-clap = { version = "4.5.46", features = ["derive"] }
-regex = "1.11.3"
+anyhow = "1.0.100"
+clap = { version = "4.5.51", features = ["derive"] }
+regex = "1.12.2"
 rstest = "0.26.1"
