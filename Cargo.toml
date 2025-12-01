@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
+name = "aoc"
+path = "src/main.rs"
+
+[[bin]]
 name = "setup"
 path = "utils/setup.rs"
 
