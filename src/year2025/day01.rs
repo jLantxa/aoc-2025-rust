@@ -1,10 +1,10 @@
 use anyhow::{Result, bail};
 
 const SAFE_MAX: i32 = 100;
-const SAFE_INIT: i32 = 50;
+const SAFE_INIT_DIAL: i32 = 50;
 
 pub(crate) fn part1(input: &str) -> Result<String> {
-    let mut safe = Safe::new(SAFE_MAX, SAFE_INIT);
+    let mut safe = Safe::new(SAFE_MAX, SAFE_INIT_DIAL);
     let mut count_zeros = 0;
 
     for line in input.lines() {
@@ -18,7 +18,7 @@ pub(crate) fn part1(input: &str) -> Result<String> {
 }
 
 pub(crate) fn part2(input: &str) -> Result<String> {
-    let mut safe = Safe::new(SAFE_MAX, SAFE_INIT);
+    let mut safe = Safe::new(SAFE_MAX, SAFE_INIT_DIAL);
     let mut count_zeros = 0;
 
     for line in input.lines() {
@@ -50,24 +50,20 @@ impl Safe {
             .parse()
             .expect("Rotation value should be an integer");
 
-        let unwrapped_position = match rotation.chars().nth(0).expect("Should have rotation") {
+        let unwrapped_dial = match rotation.chars().nth(0).expect("Should have rotation") {
             'L' => self.dial - val,
             'R' => self.dial + val,
             _ => bail!("Invalid rotation"),
         };
 
-        let zeros = num_zero_crossings(self.dial, unwrapped_position, self.max);
-        self.dial = non_negative_modulo(unwrapped_position, self.max);
+        let zeros = num_zero_crossings(self.dial, unwrapped_dial, self.max);
+
+        // Calculate a non negative modulo (negative rotations also wrap around)
+        // This is the same as ((a % n) + n) % n
+        self.dial = unwrapped_dial.rem_euclid(self.max);
 
         Ok((self.dial, zeros))
     }
-}
-
-/// Calculate a non negative modulo (negative rotations also wrap around)
-fn non_negative_modulo(a: i32, n: i32) -> i32 {
-    let r = a % n;
-    let corrected = r + n;
-    corrected % n
 }
 
 /// Calculate the number of times the dial crosses the '0' with a rotation
@@ -108,16 +104,6 @@ L82
     fn test_part2() -> Result<()> {
         assert_eq!(part2(INPUT)?, 6.to_string());
         Ok(())
-    }
-
-    #[test]
-    fn test_modulo() {
-        assert_eq!(non_negative_modulo(0, 100), 0);
-        assert_eq!(non_negative_modulo(99, 100), 99);
-        assert_eq!(non_negative_modulo(100, 100), 0);
-        assert_eq!(non_negative_modulo(150, 100), 50);
-        assert_eq!(non_negative_modulo(-1, 100), 99);
-        assert_eq!(non_negative_modulo(-50, 100), 50);
     }
 
     #[test]
