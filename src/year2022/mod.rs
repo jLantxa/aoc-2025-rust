@@ -1,17 +1,17 @@
 use crate::aoc::DailySolutions;
 
-pub(crate) mod day01;
-pub(crate) mod day02;
-pub(crate) mod day03;
-pub(crate) mod day04;
-pub(crate) mod day05;
-pub(crate) mod day06;
-pub(crate) mod day07;
-pub(crate) mod day08;
-pub(crate) mod day09;
-pub(crate) mod day10;
-pub(crate) mod day11;
-pub(crate) mod day12;
+mod day01;
+mod day02;
+mod day03;
+mod day04;
+mod day05;
+mod day06;
+mod day07;
+mod day08;
+mod day09;
+mod day10;
+mod day11;
+mod day12;
 
 pub fn get_solution(day: u8) -> Option<DailySolutions> {
     match day {
