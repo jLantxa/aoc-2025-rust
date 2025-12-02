@@ -1,113 +1,97 @@
-//! This implementation uses a brute force approach. There is a faster way
-//! to solve this using some modulo magic to check for repeating pattenrs.
-//! However, for the size of the input and number of IDs to check,the brute
-//! force implementation is still good.
-
 use std::ops::RangeInclusive;
 
 use anyhow::Result;
 
 pub(crate) fn part1(input: &str) -> Result<String> {
-    Ok(accumulate_invalid_ids(input, process_id_repeating_halves).to_string())
+    // Part 1 checks for a sequence repeated exactly twice (e.g., 1212)
+    let filter = |id: i64| -> bool {
+        assert!(id <= 9_999_999_999, "ID {id} is too big to be handled");
+
+        match id {
+            // Check for 'AA' (len 2) - Divisible by 11
+            10..=99 => id % 11 != 0,
+            // Check for 'ABAB' (len 4) - Divisible by 101
+            1_000..=9_999 => id % 101 != 0,
+            // Check for 'ABCABC' (len 6) - Divisible by 1_001
+            100_000..=999_999 => id % 1_001 != 0,
+            // Check for 'ABCDABCD' (len 8) - Divisible by 10_001
+            10_000_000..=99_999_999 => id % 10_001 != 0,
+            // Check for 'ABCDEABCDE' (len 10) - Divisible by 100_001
+            1_000_000_000..=9_999_999_999 => id % 100_001 != 0,
+
+            // All other ranges are either valid or simply unhandled
+            _ => true,
+        }
+    };
+
+    Ok(accumulate_invalid_ids(input.trim(), filter).to_string())
 }
 
 pub(crate) fn part2(input: &str) -> Result<String> {
-    Ok(accumulate_invalid_ids(input, process_id_repeating_any).to_string())
-}
+    // Part 2 checks for any repeating sequence (e.g., 111, 121212, 123123)
+    let filter = |id: i64| -> bool {
+        assert!(id <= 9_999_999_999, "ID {id} is too big to be handled");
 
-/// Returns false if an ID has a repeating sequence of numbers (twice).
-/// 55 (5 twice), 6464 (64 twice), and 123123 (123 twice) would all be invalid IDs.
-///
-/// This is a validation function, so it returns true if the ID is valid and false otherwise.
-fn process_id_repeating_halves(id: i64) -> bool {
-    let text = id.to_string();
-    let len = text.len();
+        match id {
+            // Len 2: AA (divisible by 11)
+            10..=99 => id % 11 != 0,
 
-    if !len.is_multiple_of(2) {
-        // If the length is uneven, it cannot have two equal halves and this is a valid ID.
-        return true;
-    }
+            // Len 3: AAA (divisible by 111)
+            100..=999 => id % 111 != 0,
 
-    text[0..len / 2] != text[len / 2..]
-}
+            // Len 4: ABAB (divisible by 101) or AAAA (divisible by 1111)
+            1_000..=9_999 => id % 101 != 0 && id % 1_111 != 0,
 
-/// Returns false if an ID has a repeating sequence of numbers (any number of times).
-/// 12341234 (1234 two times), 123123123 (123 three times), 1212121212 (12 five times),
-/// and 1111111 (1 seven times) are all invalid IDs.
-///
-/// This is a validation function, so it returns true if the ID is valid and false otherwise.
-fn process_id_repeating_any(id: i64) -> bool {
-    let id_text = id.to_string();
-    let len = id_text.len();
+            // Len 5: AAAAA (divisible by 11111). No smaller repeating unit.
+            10_000..=99_999 => id % 11_111 != 0,
 
-    let is_repeating = |n: usize| -> bool {
-        if !len.is_multiple_of(n) {
-            // The ID cannot have n repeating numbers if len is not a multilple of n.
-            return false;
-        };
+            // Len 6: ABCABC (divisible by 1001), ABABAB (divisible by 10101), or AAAAAA (divisible by 111111)
+            100_000..=999_999 => id % 1_001 != 0 && id % 10_101 != 0 && id % 111_111 != 0,
 
-        // Compare with all other substrings
-        let substr = &id_text[0..n];
-        for i in 1..(len / n) {
-            if &id_text[i * n..i * n + n] != substr {
-                return false;
+            // Len 7: AAAAAAA (divisible by 1111111). No smaller repeating unit.
+            1_000_000..=9_999_999 => id % 1_111_111 != 0,
+
+            // Len 8: ABCDABCD (10001), ABABABAB (1010101), or AAAAAAAA (11111111)
+            10_000_000..=99_999_999 => {
+                id % 10_001 != 0 && id % 1_010_101 != 0 && id % 11_111_111 != 0
             }
-        }
 
-        true
+            // Len 9: ABCABCABC (1001001), or AAAAAAAAA (111111111)
+            100_000_000..=999_999_999 => id % 1_001_001 != 0 && id % 111_111_111 != 0,
+
+            // Len 10: ABCDEABCDE (100001), ABABABABAB (101010101), or AAAAAAAAAA (1111111111)
+            1_000_000_000..=9_999_999_999 => {
+                id % 100_001 != 0 && id % 101_010_101 != 0 && id % 1_111_111_111 != 0
+            }
+
+            // All other ranges are either valid or simply unhandled
+            _ => true,
+        }
     };
 
-    // Check for substrings of length 1 and increasing.
-    for n in 1..=len / 2 {
-        if is_repeating(n) {
-            return false;
-        }
-    }
-
-    true
-}
-
-/// Process a range of IDs using `f` as a validation function.
-fn process_range<F: Fn(i64) -> bool>(range: RangeInclusive<i64>, f: F) -> Vec<i64> {
-    let mut invalid_ids = Vec::new();
-    for id in range {
-        if !f(id) {
-            invalid_ids.push(id);
-        }
-    }
-
-    invalid_ids
+    Ok(accumulate_invalid_ids(input.trim(), filter).to_string())
 }
 
 /// Read an inclusive range from a string.
-fn read_range(s: &str) -> RangeInclusive<i64> {
-    let vals: Vec<&str> = s.trim().split("-").collect();
-    assert_eq!(vals.len(), 2);
 
-    vals.first()
-        .expect("Should have first ID")
-        .parse()
-        .expect("First ID should be an integer")
-        ..=vals
-            .last()
-            .expect("Should have last ID")
-            .parse()
-            .expect("Last ID should be an integer")
+fn to_range(s: &str) -> RangeInclusive<i64> {
+    let (start, end) = s
+        .split_once("-")
+        .expect("Range should have the '-' separator");
+
+    start.parse().expect("First ID should be an integer")
+        ..=end.parse().expect("Last ID should be an integer")
 }
 
 /// Finds all invalid IDs from the ranges in an input string.
 /// Uses `f` as a validation function.
 fn accumulate_invalid_ids<F: Fn(i64) -> bool>(input: &str, f: F) -> i64 {
-    let mut acc: i64 = 0;
-    for s in input.split(",") {
-        let range = read_range(s);
-        let invalid_ids = process_range(range, &f);
-        for id in invalid_ids {
-            acc += id;
-        }
-    }
-
-    acc
+    input
+        .split(',')
+        .map(|s| to_range(s))
+        .flat_map(|range| range)
+        .filter(|&id| !f(id))
+        .sum::<i64>()
 }
 
 #[cfg(test)]
