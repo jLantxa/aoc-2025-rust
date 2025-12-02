@@ -1,3 +1,21 @@
+//! This solution uses a mathematical approach to avoid converting the IDs
+//! into string and compare substrings. A number with repeating digits is always
+//! a multiple of the repeating sequence.
+//!
+//! Examples:
+//! 55 = 5 * 11
+//! 223223 = 223 * (1000 + 1) = 223 * 1001
+//! 232323 = 23 * (10000 + 100 + 1) = 10101
+//! 1234512345 = 12345 * (100000 + 1) = 100001
+//!
+//! In general, for a number of N digits, we know the lengths of all possible
+//! repeating substrings.
+//! N=1 -> {1}, N=2 -> {1, 2}, N=3 -> {1, 3}, N=4 -> {1, 2, 4}, i.e, all digits
+//! submultiples.
+//! Each submultiple will have an associated divisor. We can design a filter
+//! to test each ID without testing its substrings, which is considerably
+//! faster.
+
 use std::ops::RangeInclusive;
 
 use anyhow::Result;
@@ -8,15 +26,10 @@ pub(crate) fn part1(input: &str) -> Result<String> {
         assert!(id <= 9_999_999_999, "ID {id} is too big to be handled");
 
         match id {
-            // Check for 'AA' (len 2) - Divisible by 11
             10..=99 => id % 11 != 0,
-            // Check for 'ABAB' (len 4) - Divisible by 101
             1_000..=9_999 => id % 101 != 0,
-            // Check for 'ABCABC' (len 6) - Divisible by 1_001
             100_000..=999_999 => id % 1_001 != 0,
-            // Check for 'ABCDABCD' (len 8) - Divisible by 10_001
             10_000_000..=99_999_999 => id % 10_001 != 0,
-            // Check for 'ABCDEABCDE' (len 10) - Divisible by 100_001
             1_000_000_000..=9_999_999_999 => id % 100_001 != 0,
 
             // All other ranges are either valid or simply unhandled
@@ -33,33 +46,42 @@ pub(crate) fn part2(input: &str) -> Result<String> {
         assert!(id <= 9_999_999_999, "ID {id} is too big to be handled");
 
         match id {
-            // Len 2: AA (divisible by 11)
+            // Len 2
+            // n=1 -> 11
             10..=99 => id % 11 != 0,
 
-            // Len 3: AAA (divisible by 111)
+            // Len 3
+            // n=1 -> 111
             100..=999 => id % 111 != 0,
 
-            // Len 4: ABAB (divisible by 101) or AAAA (divisible by 1111)
+            // Len 4
+            // n=2 -> 101, n=1 -> 1111
             1_000..=9_999 => id % 101 != 0 && id % 1_111 != 0,
 
-            // Len 5: AAAAA (divisible by 11111). No smaller repeating unit.
+            // Len 5
+            // n=1 -> 11111
             10_000..=99_999 => id % 11_111 != 0,
 
-            // Len 6: ABCABC (divisible by 1001), ABABAB (divisible by 10101), or AAAAAA (divisible by 111111)
+            // Len 6
+            // n=3 -> 1001, n=2 -> 10101, n=1 -> 111111
             100_000..=999_999 => id % 1_001 != 0 && id % 10_101 != 0 && id % 111_111 != 0,
 
-            // Len 7: AAAAAAA (divisible by 1111111). No smaller repeating unit.
+            // Len 7
+            // n=1 -> 1111111
             1_000_000..=9_999_999 => id % 1_111_111 != 0,
 
-            // Len 8: ABCDABCD (10001), ABABABAB (1010101), or AAAAAAAA (11111111)
+            // Len 8
+            // n=4 -> 10001, n=2 ->  1010101, n=1 -> 11111111.
             10_000_000..=99_999_999 => {
                 id % 10_001 != 0 && id % 1_010_101 != 0 && id % 11_111_111 != 0
             }
 
-            // Len 9: ABCABCABC (1001001), or AAAAAAAAA (111111111)
+            // Len 9
+            // n=3 -> 1001001, n=1 -> 111111111
             100_000_000..=999_999_999 => id % 1_001_001 != 0 && id % 111_111_111 != 0,
 
-            // Len 10: ABCDEABCDE (100001), ABABABABAB (101010101), or AAAAAAAAAA (1111111111)
+            // Len 10
+            // n=5 -> 100001, n=2 -> 101010101, n=1 -> 1111111111
             1_000_000_000..=9_999_999_999 => {
                 id % 100_001 != 0 && id % 101_010_101 != 0 && id % 1_111_111_111 != 0
             }
@@ -73,7 +95,6 @@ pub(crate) fn part2(input: &str) -> Result<String> {
 }
 
 /// Read an inclusive range from a string.
-
 fn to_range(s: &str) -> RangeInclusive<i64> {
     let (start, end) = s
         .split_once("-")
@@ -88,8 +109,7 @@ fn to_range(s: &str) -> RangeInclusive<i64> {
 fn accumulate_invalid_ids<F: Fn(i64) -> bool>(input: &str, f: F) -> i64 {
     input
         .split(',')
-        .map(|s| to_range(s))
-        .flat_map(|range| range)
+        .flat_map(to_range)
         .filter(|&id| !f(id))
         .sum::<i64>()
 }
