@@ -14,5 +14,6 @@ path = "utils/setup.rs"
 [dependencies]
 anyhow = "1.0.100"
 clap = { version = "4.5.53", features = ["derive"] }
+colored = "3.0.0"
 regex = "1.12.2"
 rstest = "0.26.1"
