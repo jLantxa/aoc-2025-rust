@@ -55,7 +55,7 @@ fn range_overlaps_range(r0: &RangeInclusive<u32>, r1: &RangeInclusive<u32>) -> b
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "\

@@ -27,7 +27,7 @@ type Joltage = u64;
 type Bank = Vec<Digit>;
 
 fn read_banks(input: &str) -> Vec<Bank> {
-    input.lines().map(|l| parse_bank(l)).collect()
+    input.lines().map(parse_bank).collect()
 }
 
 fn parse_bank(s: &str) -> Bank {
@@ -70,7 +70,7 @@ fn max_joltage(bank: &Bank, size: usize) -> Joltage {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "\

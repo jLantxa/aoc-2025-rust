@@ -115,7 +115,7 @@ fn accumulate_invalid_ids<F: Fn(i64) -> bool>(input: &str, f: F) -> i64 {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "\

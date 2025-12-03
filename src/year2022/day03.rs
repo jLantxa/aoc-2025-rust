@@ -66,7 +66,7 @@ fn find_badge(b0: &str, b1: &str, b2: &str) -> Option<char> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "\

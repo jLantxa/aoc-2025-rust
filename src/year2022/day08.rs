@@ -126,7 +126,7 @@ fn scenic_score(grid: &Grid<u32>, i: usize, j: usize) -> u32 {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "\

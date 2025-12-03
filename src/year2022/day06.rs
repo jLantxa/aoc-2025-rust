@@ -30,7 +30,7 @@ fn detect_marker<const MARKER_LEN: usize>(input: &str) -> Option<usize> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use rstest::rstest;
 
     use super::*;

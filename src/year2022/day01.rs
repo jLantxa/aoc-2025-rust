@@ -45,7 +45,7 @@ fn parse_calories(input: &str) -> Result<Vec<u64>> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
 
     use super::*;
 

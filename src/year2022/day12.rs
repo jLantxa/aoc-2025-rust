@@ -105,7 +105,7 @@ fn letter_to_height(ch: char) -> Height {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "\

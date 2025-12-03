@@ -109,7 +109,7 @@ fn move_tail(head: Position, mut tail: Position) -> Position {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT1: &str = "\

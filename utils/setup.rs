@@ -14,7 +14,7 @@ pub(crate) fn part2(input: &str) -> Result<String> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 }
 "#;

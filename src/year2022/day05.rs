@@ -116,7 +116,7 @@ fn parse(input: &str) -> Result<(Vec<Stack>, Vec<Instruction>)> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "    [D]

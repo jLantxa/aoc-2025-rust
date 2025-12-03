@@ -78,7 +78,7 @@ fn num_zero_crossings(dial: i32, unwrapped: i32, n: i32) -> i32 {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "\

@@ -73,7 +73,7 @@ fn process_commands(input: &str) -> Result<HashMap<PathBuf, Size>> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     const INPUT: &str = "\

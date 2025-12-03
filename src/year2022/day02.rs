@@ -131,7 +131,7 @@ fn simulate_strategy_guide_2(input: &str) -> Result<u64> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
 
     use super::*;
 
