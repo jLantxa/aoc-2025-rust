@@ -36,6 +36,7 @@ fn parse_bank(s: &str) -> Bank {
         .collect()
 }
 
+/// Greedy algorithm to find the `size` digits that make the biggest number.
 fn max_joltage(bank: &Bank, size: usize) -> Joltage {
     let bank_len = bank.len();
     assert!(
@@ -51,6 +52,9 @@ fn max_joltage(bank: &Bank, size: usize) -> Joltage {
 
     while n < size {
         let end = (bank_len - size) + (n + 1);
+
+        // Iterator::max() returns the LAST element. We need the FIRST, so we use max_by
+        // to correctly break the tie.
         let (relative_index, best_digit) = &bank[start..end]
             .iter()
             .enumerate()
