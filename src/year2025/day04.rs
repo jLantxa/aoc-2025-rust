@@ -2,7 +2,7 @@ use std::collections::{HashSet, VecDeque};
 
 use anyhow::Result;
 
-use crate::utils::grid::{DIRECTIONS, Grid};
+use crate::utils::grid::Grid;
 
 pub(crate) fn part1(input: &str) -> Result<String> {
     let grid = Grid::from_input(input)?;
@@ -20,30 +20,21 @@ const ROLL: char = '@';
 const EMPTY: char = '.';
 
 fn count_surrounding_rolls(grid: &Grid<char>, i: usize, j: usize) -> u8 {
-    let mut count = 0;
-    for (di, dj) in DIRECTIONS {
-        let ni = i as isize + di;
-        let nj = j as isize + dj;
-
-        if grid.is_within_bounds(ni, nj) && *grid.get(ni as usize, nj as usize) == ROLL {
-            count += 1;
-        }
-    }
-    count
+    grid.neighbors_8(i, j)
+        .filter(|&((_, _), ch)| *ch == ROLL)
+        .count() as u8
 }
 
 fn get_accessible_rolls(grid: &Grid<char>) -> Vec<(usize, usize)> {
     let mut rolls = Vec::new();
 
-    for j in 0..grid.height() {
-        for i in 0..grid.width() {
-            if *grid.get(i, j) == EMPTY {
-                continue;
-            }
+    for ((i, j), &ch) in grid.iter() {
+        if ch == EMPTY {
+            continue;
+        }
 
-            if count_surrounding_rolls(grid, i, j) < 4 {
-                rolls.push((i, j));
-            }
+        if count_surrounding_rolls(grid, i, j) < 4 {
+            rolls.push((i, j));
         }
     }
 
@@ -57,24 +48,16 @@ fn remove_accessible_rolls(grid: &mut Grid<char>) -> usize {
     let mut num_removed_rolls = 0;
 
     while let Some((i, j)) = to_remove.pop_front() {
-        *grid.get_mut(i, j) = EMPTY;
+        grid[(i, j)] = EMPTY;
         num_removed_rolls += 1;
 
-        for (di, dj) in DIRECTIONS {
-            let ni = i as isize + di;
-            let nj = j as isize + dj;
+        for ((ni, nj), &ch) in grid.neighbors_8(i, j) {
+            if ch == ROLL && !scheduled.contains(&(ni, nj)) {
+                let new_count = count_surrounding_rolls(grid, ni, nj);
 
-            if grid.is_within_bounds(ni, nj) {
-                let ni_u = ni as usize;
-                let nj_u = nj as usize;
-
-                if *grid.get(ni_u, nj_u) == ROLL && !scheduled.contains(&(ni_u, nj_u)) {
-                    let new_count = count_surrounding_rolls(grid, ni_u, nj_u);
-
-                    if new_count < 4 {
-                        to_remove.push_back((ni_u, nj_u));
-                        scheduled.insert((ni_u, nj_u));
-                    }
+                if new_count < 4 {
+                    to_remove.push_back((ni, nj));
+                    scheduled.insert((ni, nj));
                 }
             }
         }

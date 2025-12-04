@@ -19,11 +19,9 @@ pub(crate) fn part2(input: &str) -> Result<String> {
     let (grid, _start, end) = parse_input(input)?;
     let mut starting_points = Vec::new();
 
-    for j in 0..grid.height() {
-        for i in 0..grid.width() {
-            if *grid.get(i, j) == 0 {
-                starting_points.push((i, j));
-            }
+    for ((i, j), &ch) in grid.iter() {
+        if ch == 0 {
+            starting_points.push((i, j));
         }
     }
 
@@ -46,25 +44,18 @@ fn find_shortest_path_multipoint(
     }
 
     while let Some(((x, y), distance)) = queue.pop_front() {
-        let current_height = *grid.get(x, y);
+        let current_height = grid[(x, y)];
 
         if (x, y) == end {
             return Some(distance);
         }
 
-        let directions = [(0, -1), (0, 1), (-1, 0), (1, 0)];
-
-        for (dx, dy) in directions.iter() {
-            let nx = (x as isize + dx) as usize;
-            let ny = (y as isize + dy) as usize;
-
-            if grid.is_within_bounds(nx as isize, ny as isize) {
-                let neighbor_point = (nx, ny);
-                let neighbor_height = *grid.get(nx, ny);
-
-                if neighbor_height <= current_height + 1 && visited.insert(neighbor_point) {
-                    queue.push_back((neighbor_point, distance + 1));
-                }
+        for ((nx, ny), &height) in grid.neighbors_4(x, y) {
+            if grid.is_within_bounds(nx as isize, ny as isize)
+                && height <= current_height + 1
+                && visited.insert((nx, ny))
+            {
+                queue.push_back(((nx, ny), distance + 1));
             }
         }
     }
@@ -83,11 +74,9 @@ fn parse_input(input: &str) -> Result<(Grid<Height>, Point, Point)> {
 }
 
 fn find_point(grid: &Grid<char>, ch: char) -> Result<Point> {
-    for j in 0..grid.height() {
-        for i in 0..grid.width() {
-            if *grid.get(i, j) == ch {
-                return Ok((i, j));
-            }
+    for ((i, j), &grid_char) in grid.iter() {
+        if grid_char == ch {
+            return Ok((i, j));
         }
     }
 

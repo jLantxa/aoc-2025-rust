@@ -6,11 +6,9 @@ pub(crate) fn part1(input: &str) -> Result<String> {
     let grid = Grid::from_input_with(input, |ch| ch.to_digit(10).expect("Char should be a digit"))?;
 
     let mut num_visible_trees = 0;
-    for i in 0..grid.width() {
-        for j in 0..grid.height() {
-            if is_tree_visible(&grid, i, j) {
-                num_visible_trees += 1;
-            }
+    for ((i, j), _) in grid.iter() {
+        if is_tree_visible(&grid, i, j) {
+            num_visible_trees += 1;
         }
     }
 
@@ -22,10 +20,8 @@ pub(crate) fn part2(input: &str) -> Result<String> {
 
     let mut scores = Vec::new();
 
-    for i in 0..grid.width() {
-        for j in 0..grid.height() {
-            scores.push(scenic_score(&grid, i, j));
-        }
+    for ((i, j), _) in grid.iter() {
+        scores.push(scenic_score(&grid, i, j));
     }
 
     let max_score = scores.iter().max().expect("There should be a max value");
@@ -41,12 +37,12 @@ fn is_tree_visible(grid: &Grid<u32>, i: usize, j: usize) -> bool {
         return true;
     }
 
-    let tree_height = grid.get(i, j);
+    let tree_height = grid[(i, j)];
 
     // Left side
     let mut left = true;
     for d in 0..i {
-        if grid.get(d, j) >= tree_height {
+        if grid[(d, j)] >= tree_height {
             left = false;
             break;
         }
@@ -55,7 +51,7 @@ fn is_tree_visible(grid: &Grid<u32>, i: usize, j: usize) -> bool {
     // Right side
     let mut right = true;
     for d in i + 1..width {
-        if grid.get(d, j) >= tree_height {
+        if grid[(d, j)] >= tree_height {
             right = false;
             break;
         }
@@ -63,7 +59,7 @@ fn is_tree_visible(grid: &Grid<u32>, i: usize, j: usize) -> bool {
 
     let mut top = true;
     for d in 0..j {
-        if grid.get(i, d) >= tree_height {
+        if grid[(i, d)] >= tree_height {
             top = false;
             break;
         }
@@ -71,7 +67,7 @@ fn is_tree_visible(grid: &Grid<u32>, i: usize, j: usize) -> bool {
 
     let mut bottom = true;
     for d in j + 1..height {
-        if grid.get(i, d) >= tree_height {
+        if grid[(i, d)] >= tree_height {
             bottom = false;
             break;
         }
@@ -84,13 +80,13 @@ fn scenic_score(grid: &Grid<u32>, i: usize, j: usize) -> u32 {
     let width = grid.width();
     let height = grid.height();
 
-    let tree_height = grid.get(i, j);
+    let tree_height = grid[(i, j)];
 
     // Left side
     let mut left = 0;
     for d in 1..=i {
         left += 1;
-        if grid.get(i - d, j) >= tree_height {
+        if grid[(i - d, j)] >= tree_height {
             break;
         }
     }
@@ -99,7 +95,7 @@ fn scenic_score(grid: &Grid<u32>, i: usize, j: usize) -> u32 {
     let mut right = 0;
     for d in (i + 1)..width {
         right += 1;
-        if grid.get(d, j) >= tree_height {
+        if grid[(d, j)] >= tree_height {
             break;
         }
     }
@@ -108,7 +104,7 @@ fn scenic_score(grid: &Grid<u32>, i: usize, j: usize) -> u32 {
     let mut top = 0;
     for d in 1..=j {
         top += 1;
-        if grid.get(i, j - d) >= tree_height {
+        if grid[(i, j - d)] >= tree_height {
             break;
         }
     }
@@ -117,7 +113,7 @@ fn scenic_score(grid: &Grid<u32>, i: usize, j: usize) -> u32 {
     let mut bottom = 0;
     for d in (j + 1)..height {
         bottom += 1;
-        if grid.get(i, d) >= tree_height {
+        if grid[(i, d)] >= tree_height {
             break;
         }
     }
