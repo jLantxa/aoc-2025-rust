@@ -2,6 +2,18 @@
 
 use anyhow::{Result, bail};
 
+pub(crate) const DIRECTIONS: [(isize, isize); 8] = [
+    (-1, -1),
+    (0, -1),
+    (1, -1),
+    (-1, 0),
+    (1, 0),
+    (-1, 1),
+    (0, 1),
+    (1, 1),
+];
+
+#[derive(Clone)]
 pub(crate) struct Grid<T: Default + Copy> {
     width: usize,
     height: usize,
@@ -47,8 +59,8 @@ impl<T: Default + Copy> Grid<T> {
         self.height += 1;
     }
 
-    pub fn is_within_bounds(&self, i: usize, j: usize) -> bool {
-        i < self.width && j < self.height
+    pub fn is_within_bounds(&self, i: isize, j: isize) -> bool {
+        i >= 0 && j >= 0 && i < self.width as isize && j < self.height as isize
     }
 
     pub fn from_input_with<F>(input: &str, mapper: F) -> Result<Self>

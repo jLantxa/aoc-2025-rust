@@ -58,7 +58,7 @@ fn find_shortest_path_multipoint(
             let nx = (x as isize + dx) as usize;
             let ny = (y as isize + dy) as usize;
 
-            if grid.is_within_bounds(nx, ny) {
+            if grid.is_within_bounds(nx as isize, ny as isize) {
                 let neighbor_point = (nx, ny);
                 let neighbor_height = *grid.get(nx, ny);
 
