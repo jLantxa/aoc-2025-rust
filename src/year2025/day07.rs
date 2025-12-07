@@ -1,31 +1,22 @@
 use anyhow::{Result, anyhow};
 use std::collections::HashSet;
 
+use crate::utils::grid::Grid;
+
 const SPLITTER: char = '^';
 const START: char = 'S';
 
 struct Manifold {
-    grid: Vec<Vec<char>>,
-    width: usize,
-    height: usize,
+    grid: Grid<char>,
     start_col: usize,
 }
 
 impl Manifold {
     fn parse(input: &str) -> Result<Self> {
-        let grid: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+        let grid = Grid::from_input(input)?;
+        debug_assert!(!grid.is_empty());
 
-        if grid.is_empty() {
-            return Err(anyhow!("Input manifold is empty."));
-        }
-
-        let first_row = &grid[0];
-        let width = first_row.len();
-        let height = grid.len();
-
-        if width == 0 {
-            return Err(anyhow!("Manifold rows cannot be empty."));
-        }
+        let first_row = grid.row(0);
 
         let start_col = first_row.iter().position(|&c| c == START).ok_or_else(|| {
             anyhow!(
@@ -34,12 +25,7 @@ impl Manifold {
             )
         })?;
 
-        Ok(Manifold {
-            grid,
-            width,
-            height,
-            start_col,
-        })
+        Ok(Manifold { grid, start_col })
     }
 }
 
@@ -50,27 +36,27 @@ pub(crate) fn part1(input: &str) -> Result<String> {
     active_beams.insert(manifold.start_col);
     let mut split_count: u64 = 0;
 
-    for r in 1..manifold.height {
+    for row in 1..manifold.grid.height() {
         let mut next_beams: HashSet<usize> = HashSet::new();
 
         if active_beams.is_empty() {
             break;
         }
 
-        for &c in &active_beams {
-            match manifold.grid[r][c] {
+        for &col in &active_beams {
+            match manifold.grid[(col, row)] {
                 SPLITTER => {
                     split_count += 1;
 
-                    if c > 0 {
-                        next_beams.insert(c - 1);
+                    if col > 0 {
+                        next_beams.insert(col - 1);
                     }
-                    if c + 1 < manifold.width {
-                        next_beams.insert(c + 1);
+                    if col + 1 < manifold.grid.width() {
+                        next_beams.insert(col + 1);
                     }
                 }
                 _ => {
-                    next_beams.insert(c);
+                    next_beams.insert(col);
                 }
             }
         }
@@ -84,31 +70,30 @@ pub(crate) fn part1(input: &str) -> Result<String> {
 pub(crate) fn part2(input: &str) -> Result<String> {
     let manifold = Manifold::parse(input)?;
 
-    let mut timeline_counts: Vec<u64> = vec![0; manifold.width];
-
+    let mut timeline_counts: Vec<u64> = vec![0; manifold.grid.width()];
     timeline_counts[manifold.start_col] = 1;
 
-    for r in 1..manifold.height {
-        let mut next_counts: Vec<u64> = vec![0; manifold.width];
+    for row in 1..manifold.grid.height() {
+        let mut next_counts: Vec<u64> = vec![0; manifold.grid.width()];
 
-        for c in 0..manifold.width {
-            let count = timeline_counts[c];
+        for col in 0..manifold.grid.width() {
+            let count = timeline_counts[col];
 
             if count == 0 {
                 continue;
             }
 
-            match manifold.grid[r][c] {
+            match manifold.grid[(col, row)] {
                 SPLITTER => {
-                    if c > 0 {
-                        next_counts[c - 1] = next_counts[c - 1].saturating_add(count);
+                    if col > 0 {
+                        next_counts[col - 1] = next_counts[col - 1].saturating_add(count);
                     }
-                    if c + 1 < manifold.width {
-                        next_counts[c + 1] = next_counts[c + 1].saturating_add(count);
+                    if col + 1 < manifold.grid.width() {
+                        next_counts[col + 1] = next_counts[col + 1].saturating_add(count);
                     }
                 }
                 _ => {
-                    next_counts[c] = next_counts[c].saturating_add(count);
+                    next_counts[col] = next_counts[col].saturating_add(count);
                 }
             }
         }

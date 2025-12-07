@@ -137,6 +137,18 @@ impl<T: Default + Copy> Grid<T> {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        (self.width() * self.height()) == 0
+    }
+
+    pub fn row(&self, r: usize) -> &[T] {
+        &self.data[r * self.width..(r + 1) * self.width]
+    }
+
+    pub fn row_mut(&mut self, r: usize) -> &mut [T] {
+        &mut self.data[r * self.width..(r + 1) * self.width]
+    }
+
     /// Returns an iterator over all (i, j) coordinates (column, row) in the grid.
     pub fn coords_iter(&self) -> GridCoordsIterator {
         GridCoordsIterator {
