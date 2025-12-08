@@ -7,7 +7,7 @@ mod day04;
 mod day05;
 mod day06;
 mod day07;
-// mod day08;
+mod day08;
 // mod day09;
 // mod day10;
 // mod day11;
@@ -22,7 +22,7 @@ pub fn get_solution(day: u8) -> Option<DailySolutions> {
         5 => Some((day05::part1, day05::part2)),
         6 => Some((day06::part1, day06::part2)),
         7 => Some((day07::part1, day07::part2)),
-        // 8 => Some((day08::part1, day08::part2)),
+        8 => Some((day08::part1, day08::part2)),
         // 9 => Some((day09::part1, day09::part2)),
         // 10 => Some((day10::part1, day10::part2)),
         // 11 => Some((day11::part1, day11::part2)),
