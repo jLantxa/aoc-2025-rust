@@ -1,7 +1,8 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 pub(crate) fn part1(input: &str) -> Result<String> {
-    connect_part1(input, 1000)
+    const NUM_PAIRS: usize = 1000;
+    connect_boxes(input, NUM_PAIRS)
 }
 
 pub(crate) fn part2(input: &str) -> Result<String> {
@@ -14,98 +15,51 @@ pub(crate) fn part2(input: &str) -> Result<String> {
     Ok((x_i * x_j).to_string())
 }
 
-type Box = (i64, i64, i64);
+type Point = (i64, i64, i64);
+type Edge = (usize, usize, i64);
 
-fn connect_part1(input: &str, num_pairs: usize) -> Result<String> {
-    let mut scp = StupidCircuitProblem::init(input)?;
-    let circuit_sizes = scp.conectilear(Some(num_pairs));
+fn connect_boxes(input: &str, num_pairs: usize) -> Result<String> {
+    let scp = StupidCircuitProblem::init(input)?;
+    let circuit_sizes = scp.connect(Some(num_pairs));
 
-    let mut sorted_sizes = circuit_sizes;
-    sorted_sizes.sort_unstable_by(|a, b| b.cmp(a));
-
-    Ok(StupidCircuitProblem::three_largest(&sorted_sizes).to_string())
+    Ok(StupidCircuitProblem::three_largest(&circuit_sizes).to_string())
 }
 
 struct StupidCircuitProblem {
-    boxes: Vec<Box>,
+    boxes: Vec<Point>,
 }
 
 impl StupidCircuitProblem {
     fn init(input: &str) -> Result<Self> {
         Ok(Self {
-            boxes: parse_boxes(input)?,
+            boxes: parse_points(input)?,
         })
     }
-
-    fn conectilear(&mut self, num_pairs: Option<usize>) -> Vec<usize> {
+    fn connect(&self, num_pairs: Option<usize>) -> Vec<usize> {
         let num_boxes = self.boxes.len();
+        let mut union_find = UnionFind::new(num_boxes);
 
-        let sorted_distances = sorted_distances_indexed(&self.boxes, num_pairs);
+        let sorted_edges = get_sorted_edges(&self.boxes, num_pairs);
 
-        let mut parent: Vec<usize> = (0..num_boxes).collect();
-        let mut circuit_size: Vec<usize> = vec![1; num_boxes];
-
-        fn find_root(parent: &mut [usize], i: usize) -> usize {
-            if parent[i] == i {
-                return i;
-            }
-            parent[i] = find_root(parent, parent[i]);
-            parent[i]
+        for (i, j, _distance) in sorted_edges {
+            union_find.union(i, j);
         }
 
-        for (i, j, _d) in sorted_distances.into_iter().rev() {
-            let root_i = find_root(&mut parent, i);
-            let root_j = find_root(&mut parent, j);
-
-            if root_i != root_j {
-                if circuit_size[root_i] < circuit_size[root_j] {
-                    parent[root_i] = root_j;
-                    circuit_size[root_j] += circuit_size[root_i];
-                } else {
-                    parent[root_j] = root_i;
-                    circuit_size[root_i] += circuit_size[root_j];
-                }
-            }
-        }
-
-        let mut final_sizes = Vec::new();
-        for i in 0..num_boxes {
-            if parent[i] == i {
-                final_sizes.push(circuit_size[i]);
-            }
-        }
-
-        final_sizes
+        union_find.circuit_sizes()
     }
 
     fn find_last_connection(&self) -> (usize, usize) {
         let num_boxes = self.boxes.len();
+        let mut uf = UnionFind::new(num_boxes);
+        let sorted_edges = get_sorted_edges(&self.boxes, None);
 
-        let sorted_distances = sorted_distances_indexed(&self.boxes, None);
-
-        let mut parent: Vec<usize> = (0..num_boxes).collect();
-        let mut num_circuits = num_boxes;
         let mut last_connection = (0, 0);
 
-        fn find_root(parent: &mut [usize], i: usize) -> usize {
-            if parent[i] == i {
-                return i;
-            }
-            parent[i] = find_root(parent, parent[i]);
-            parent[i]
-        }
-
-        for (i, j, _d) in sorted_distances.into_iter() {
-            let root_i = find_root(&mut parent, i);
-            let root_j = find_root(&mut parent, j);
-
-            if root_i != root_j {
-                parent[root_i] = root_j;
-
+        for (i, j, _d) in sorted_edges {
+            if uf.union(i, j) {
                 last_connection = (i, j);
-                num_circuits -= 1;
 
-                if num_circuits == 1 {
+                if uf.num_sets == 1 {
                     return last_connection;
                 }
             }
@@ -119,23 +73,87 @@ impl StupidCircuitProblem {
     }
 }
 
-fn parse_boxes(input: &str) -> Result<Vec<Box>> {
-    Ok(input
-        .trim()
-        .lines()
-        .map(|line| {
-            let parts: Vec<_> = line.split(",").collect();
-            (
-                parts[0].parse().expect("Should have x"),
-                parts[1].parse().expect("Should have y"),
-                parts[2].parse().expect("Should have z"),
-            )
-        })
-        .collect::<Vec<_>>())
+struct UnionFind {
+    parent: Vec<usize>,
+    size: Vec<usize>,
+    num_sets: usize,
 }
 
-fn sorted_distances_indexed(boxes: &[Box], num_pairs: Option<usize>) -> Vec<(usize, usize, i64)> {
-    let mut distances = Vec::new();
+impl UnionFind {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            size: vec![1; n],
+            num_sets: n,
+        }
+    }
+
+    fn find(&mut self, i: usize) -> usize {
+        if self.parent[i] == i {
+            return i;
+        }
+        self.parent[i] = self.find(self.parent[i]);
+        self.parent[i]
+    }
+
+    fn union(&mut self, i: usize, j: usize) -> bool {
+        let mut root_i = self.find(i);
+        let mut root_j = self.find(j);
+
+        if root_i != root_j {
+            if self.size[root_i] < self.size[root_j] {
+                std::mem::swap(&mut root_i, &mut root_j);
+            }
+
+            self.parent[root_j] = root_i;
+            self.size[root_i] += self.size[root_j];
+            self.num_sets -= 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn circuit_sizes(&self) -> Vec<usize> {
+        let mut final_sizes = Vec::new();
+        for i in 0..self.parent.len() {
+            if self.parent[i] == i {
+                final_sizes.push(self.size[i]);
+            }
+        }
+
+        final_sizes.sort_unstable_by(|a, b| b.cmp(a));
+        final_sizes
+    }
+}
+
+fn parse_points(input: &str) -> Result<Vec<Point>> {
+    input
+        .trim()
+        .lines()
+        .enumerate()
+        .map(|(line_idx, line)| {
+            let parts: Vec<_> = line.split(',').collect();
+
+            if parts.len() != 3 {
+                return Err(anyhow::anyhow!(
+                    "Expected 3 coordinates, got {}",
+                    parts.len()
+                ))
+                .context(format!("Parsing line {}", line_idx + 1));
+            }
+
+            Ok((
+                parts[0].parse().context("Parsing x")?,
+                parts[1].parse().context("Parsing y")?,
+                parts[2].parse().context("Parsing z")?,
+            ))
+        })
+        .collect::<Result<Vec<_>>>()
+}
+
+fn get_sorted_edges(boxes: &[Point], num_pairs: Option<usize>) -> Vec<Edge> {
+    let mut distances: Vec<Edge> = Vec::new();
     let num_boxes = boxes.len();
 
     for i in 0..num_boxes {
@@ -147,9 +165,7 @@ fn sorted_distances_indexed(boxes: &[Box], num_pairs: Option<usize>) -> Vec<(usi
         }
     }
 
-    distances.sort_unstable_by(|&(_, _, d0), &(_, _, d1)| {
-        d0.partial_cmp(&d1).expect("Should be comparable")
-    });
+    distances.sort_unstable_by_key(|&(_bi, _bj, distance)| distance);
 
     if let Some(n) = num_pairs {
         distances.truncate(n);
@@ -159,8 +175,8 @@ fn sorted_distances_indexed(boxes: &[Box], num_pairs: Option<usize>) -> Vec<(usi
 }
 
 #[inline]
-fn distance2(b0: &Box, b1: &Box) -> i64 {
-    (b1.0 - b0.0).pow(2) + (b1.1 - b0.1).pow(2) + (b1.2 - b0.2).pow(2)
+fn distance2(p0: &Point, p1: &Point) -> i64 {
+    (p1.0 - p0.0).pow(2) + (p1.1 - p0.1).pow(2) + (p1.2 - p0.2).pow(2)
 }
 
 #[cfg(test)]
@@ -191,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_part1() -> Result<()> {
-        assert_eq!(connect_part1(INPUT, 10)?, 40.to_string());
+        assert_eq!(connect_boxes(INPUT, 10)?, 40.to_string());
         Ok(())
     }
 
