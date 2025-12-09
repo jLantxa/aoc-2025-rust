@@ -137,6 +137,15 @@ impl<T: Default + Copy> Grid<T> {
         }
     }
 
+    /// Creates a new grid initialized with `elem`.
+    pub fn new_with(width: usize, height: usize, elem: T) -> Self {
+        Self {
+            width,
+            height,
+            data: vec![elem; width * height],
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         (self.width() * self.height()) == 0
     }
