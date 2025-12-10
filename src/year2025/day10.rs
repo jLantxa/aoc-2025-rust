@@ -1,6 +1,5 @@
-use std::{io::Write, process::Command};
-
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result, anyhow, bail};
+use z3::{Optimize, SatResult, ast::Int};
 
 pub(crate) fn part1(input: &str) -> Result<String> {
     Ok(parse_machines(input)?
@@ -13,7 +12,11 @@ pub(crate) fn part1(input: &str) -> Result<String> {
 pub(crate) fn part2(input: &str) -> Result<String> {
     Ok(parse_machines(input)?
         .into_iter()
-        .map(|machine| machine.optimize_button_presses_p2())
+        .map(|machine| {
+            machine
+                .optimize_button_presses_p2()
+                .expect("There should be a solution")
+        })
         .sum::<usize>()
         .to_string())
 }
@@ -164,60 +167,70 @@ impl Machine {
     /// (B is not always a square matrix).
     ///
     /// Tried BFS but it was too slow (no solution after 10 minutes).
-    ///
-    /// Use Z3 by an external Python script.
-    fn optimize_button_presses_p2(&self) -> usize {
-        const SCRIPT_PATH: &str = "./src/year2025/d10p2_solver.py";
+    /// Used Z3. This feels like cheating, but I want that star!
+    pub fn optimize_button_presses_p2(&self) -> Result<usize> {
+        let num_buttons = self.buttons.len();
+        let num_counters = self.joltages.len();
 
-        // Helper struct for serializing data to Python
-        #[derive(Debug, serde::Serialize)]
-        struct MachineData<'a> {
-            buttons: &'a [IndicatorLights],
-            joltages: &'a [u16],
-            num_counters: usize,
-            num_buttons: usize,
+        let opt = Optimize::new();
+        let s_vars: Vec<Int> = (0..num_buttons).map(|_| Int::fresh_const("s")).collect();
+
+        let zero = Int::from_i64(0);
+        for s_var in s_vars.iter() {
+            opt.assert(&s_var.ge(&zero));
         }
 
-        let data = MachineData {
-            buttons: &self.buttons,
-            joltages: &self.joltages,
-            num_counters: self.joltages.len(),
-            num_buttons: self.buttons.len(),
-        };
+        for j in 0..num_counters {
+            let target_joltage: i64 = self.joltages[j] as i64;
 
-        let input_json = serde_json::to_string(&data).expect("Failed to serialize machine data");
+            let contributions: Vec<&Int> = self
+                .buttons
+                .iter()
+                .enumerate()
+                .filter_map(|(i, button_mask)| {
+                    if (*button_mask >> j) & 1 == 1 {
+                        Some(&s_vars[i])
+                    } else {
+                        None
+                    }
+                })
+                .collect();
 
-        let mut child = Command::new("python")
-            .arg(SCRIPT_PATH)
-            .stdin(std::process::Stdio::piped())
-            .stdout(std::process::Stdio::piped())
-            .spawn()
-            .expect("Failed to execute Python script. Ensure 'python' is in your PATH and solve_ilp.py exists.");
+            let sum_contributions = Int::add(&contributions);
 
-        {
-            let stdin = child
-                .stdin
-                .as_mut()
-                .expect("Failed to open stdin for Python");
-            stdin
-                .write_all(input_json.as_bytes())
-                .expect("Failed to write to stdin");
+            let rhs = Int::from_i64(target_joltage);
+
+            opt.assert(&sum_contributions.eq(&rhs));
         }
 
-        let output = child
-            .wait_with_output()
-            .expect("Failed to read output from Python script");
+        let s_vars_refs: Vec<&Int> = s_vars.iter().collect();
+        let total_presses = Int::add(&s_vars_refs);
 
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            panic!("Python script failed with error:\n{}", stderr);
+        opt.minimize(&total_presses);
+
+        match opt.check(&[]) {
+            SatResult::Sat => {
+                let model = opt
+                    .get_model()
+                    .context("Z3 found a solution but failed to generate a model")?;
+
+                if let Some(total_ast) = model.eval(&total_presses, true) {
+                    if let Some(presses) = total_ast.as_i64() {
+                        Ok(presses as usize)
+                    } else {
+                        Err(anyhow!("Z3 result for total presses was not an integer."))
+                    }
+                } else {
+                    Err(anyhow!("Z3 model failed to evaluate the minimized sum."))
+                }
+            }
+            SatResult::Unsat => Err(anyhow!(
+                "The set of constraints is unsatisfiable (no solution exists)."
+            )),
+            SatResult::Unknown => Err(anyhow!(
+                "Z3 solver returned 'Unknown'. Could be a timeout or an unhandled complexity."
+            )),
         }
-
-        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-
-        stdout
-            .parse::<usize>()
-            .unwrap_or_else(|_| panic!("Python script returned non-integer output: '{}'", stdout))
     }
 }
 
