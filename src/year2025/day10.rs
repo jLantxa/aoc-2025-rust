@@ -1,3 +1,5 @@
+use std::{io::Write, process::Command};
+
 use anyhow::{Context, Result, bail};
 
 pub(crate) fn part1(input: &str) -> Result<String> {
@@ -162,8 +164,60 @@ impl Machine {
     /// (B is not always a square matrix).
     ///
     /// Tried BFS but it was too slow (no solution after 10 minutes).
+    ///
+    /// Use Z3 by an external Python script.
     fn optimize_button_presses_p2(&self) -> usize {
-        todo!()
+        const SCRIPT_PATH: &str = "./src/year2025/d10p2_solver.py";
+
+        // Helper struct for serializing data to Python
+        #[derive(Debug, serde::Serialize)]
+        struct MachineData<'a> {
+            buttons: &'a [IndicatorLights],
+            joltages: &'a [u16],
+            num_counters: usize,
+            num_buttons: usize,
+        }
+
+        let data = MachineData {
+            buttons: &self.buttons,
+            joltages: &self.joltages,
+            num_counters: self.joltages.len(),
+            num_buttons: self.buttons.len(),
+        };
+
+        let input_json = serde_json::to_string(&data).expect("Failed to serialize machine data");
+
+        let mut child = Command::new("python")
+            .arg(SCRIPT_PATH)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .expect("Failed to execute Python script. Ensure 'python' is in your PATH and solve_ilp.py exists.");
+
+        {
+            let stdin = child
+                .stdin
+                .as_mut()
+                .expect("Failed to open stdin for Python");
+            stdin
+                .write_all(input_json.as_bytes())
+                .expect("Failed to write to stdin");
+        }
+
+        let output = child
+            .wait_with_output()
+            .expect("Failed to read output from Python script");
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            panic!("Python script failed with error:\n{}", stderr);
+        }
+
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+
+        stdout
+            .parse::<usize>()
+            .unwrap_or_else(|_| panic!("Python script returned non-integer output: '{}'", stdout))
     }
 }
 
