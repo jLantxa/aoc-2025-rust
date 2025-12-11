@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::{Result, bail};
+use anyhow::Result;
 
 pub(crate) fn part1(input: &str) -> Result<String> {
     let graph = parse_graph(input);
@@ -9,7 +9,23 @@ pub(crate) fn part1(input: &str) -> Result<String> {
 }
 
 pub(crate) fn part2(input: &str) -> Result<String> {
-    bail!("Unimplemented");
+    let graph = parse_graph(input);
+
+    // Consider two cases:
+    // 1. svr → dac → fft → out
+    // 2. svr → fft → dac → out
+    let svr_dac = count_paths(&graph, "svc", "dac", &mut HashMap::new());
+    let dac_fft = count_paths(&graph, "dac", "fft", &mut HashMap::new());
+    let fft_out = count_paths(&graph, "fft", "out", &mut HashMap::new());
+    let num_paths_route_1 = svr_dac * dac_fft * fft_out;
+
+    let svr_fft = count_paths(&graph, "svr", "fft", &mut HashMap::new());
+    let fft_dac = count_paths(&graph, "fft", "dac", &mut HashMap::new());
+    let dac_out = count_paths(&graph, "dac", "out", &mut HashMap::new());
+    let num_paths_route_2 = svr_fft * fft_dac * dac_out;
+
+    let num_paths = num_paths_route_1 + num_paths_route_2;
+    Ok(num_paths.to_string())
 }
 
 type Graph<'a> = HashMap<&'a str, Vec<&'a str>>;
@@ -61,7 +77,7 @@ fn count_paths<'a>(
 mod tests {
     use super::*;
 
-    const INPUT: &str = "\
+    const INPUT_1: &str = "\
 aaa: you hhh
 you: bbb ccc
 bbb: ddd eee
@@ -73,9 +89,30 @@ ggg: out
 hhh: ccc fff iii
 iii: out";
 
+    const INPUT_2: &str = "\
+svr: aaa bbb
+aaa: fft
+fft: ccc
+bbb: tty
+tty: ccc
+ccc: ddd eee
+ddd: hub
+hub: fff
+eee: dac
+dac: fff
+fff: ggg hhh
+ggg: out
+hhh: out";
+
     #[test]
     fn test_part1() -> Result<()> {
-        assert_eq!(part1(INPUT)?, 5.to_string());
+        assert_eq!(part1(INPUT_1)?, 5.to_string());
+        Ok(())
+    }
+
+    #[test]
+    fn test_part2() -> Result<()> {
+        assert_eq!(part2(INPUT_2)?, 2.to_string());
         Ok(())
     }
 }
