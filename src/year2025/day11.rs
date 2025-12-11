@@ -14,7 +14,7 @@ pub(crate) fn part2(input: &str) -> Result<String> {
     // Consider two cases:
     // 1. svr → dac → fft → out
     // 2. svr → fft → dac → out
-    let svr_dac = count_paths(&graph, "svc", "dac", &mut HashMap::new());
+    let svr_dac = count_paths(&graph, "svr", "dac", &mut HashMap::new());
     let dac_fft = count_paths(&graph, "dac", "fft", &mut HashMap::new());
     let fft_out = count_paths(&graph, "fft", "out", &mut HashMap::new());
     let num_paths_route_1 = svr_dac * dac_fft * fft_out;
