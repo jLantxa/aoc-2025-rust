@@ -1,7 +1,5 @@
 //! This puzzle was a fucking nightmare to make it work efficiently.
 
-use std::collections::{HashMap, HashSet};
-
 use anyhow::Result;
 
 pub(crate) fn part1(input: &str) -> Result<String> {
@@ -17,11 +15,10 @@ pub(crate) fn part2(input: &str) -> Result<String> {
     // incompetent  elves are able to make anything useful for Christmas. There
     // is always a misundestanding, a problem, whatever...
 
-    let tiles: HashSet<(i64, i64)> = parse_tiles(input)?.into_iter().collect();
-    let perimeter_tiles = sort_perimeter(&tiles);
+    let tiles = parse_tiles(input)?;
     let areas = calculate_tiling_areas_filtered(
-        &perimeter_tiles,
-        Some(|t0: &Point, t1: &Point| perimeter_contains(&perimeter_tiles, t0, t1)),
+        &tiles,
+        Some(|t0: &Point, t1: &Point| perimeter_contains(&tiles, t0, t1)),
     );
     Ok(areas.iter().max().expect("Should have a max").to_string())
 }
@@ -80,67 +77,6 @@ where
             })
         })
         .collect()
-}
-
-/// Sorts a set of cardinal-neighboring 2D points into a sequential vector
-/// representing the closed perimeter path.
-///
-/// This implementation is O(N^2) because of the adjacency step. We can make it
-/// O(N * log N), but I have better things to do. Also, other parts of the
-/// complete algorithm for part 2 will be O(N^2) so the gains would be marginal.
-fn sort_perimeter(tiles: &HashSet<Point>) -> Vec<Point> {
-    assert!(tiles.len() >= 4);
-
-    // Build adjacency: nearest with same x, nearest with same y.
-    let mut adj: HashMap<Point, [Point; 2]> = HashMap::with_capacity(tiles.len());
-
-    for &p in tiles {
-        let mut best_x = (Value::MAX, p);
-        let mut best_y = (Value::MAX, p);
-
-        for &q in tiles {
-            if q == p {
-                continue;
-            }
-            if q.0 == p.0 {
-                let d = (q.1 - p.1).abs();
-                if d < best_x.0 {
-                    best_x = (d, q);
-                }
-            }
-            if q.1 == p.1 {
-                let d = (q.0 - p.0).abs();
-                if d < best_y.0 {
-                    best_y = (d, q);
-                }
-            }
-        }
-
-        assert!(best_x.0 < Value::MAX && best_y.0 < Value::MAX);
-
-        adj.insert(p, [best_x.1, best_y.1]);
-    }
-
-    // Canonical start: smallest (y, x)
-    let &start = tiles.iter().min_by_key(|p| (p.1, p.0)).unwrap();
-
-    // Walk the cycle once
-    let mut path = Vec::with_capacity(tiles.len());
-    path.push(start);
-
-    let mut prev = start;
-    let mut cur = adj[&start][0]; // arbitrary first step
-
-    while cur != start {
-        path.push(cur);
-        let ns = adj[&cur];
-        let next = if ns[0] == prev { ns[1] } else { ns[0] };
-        prev = cur;
-        cur = next;
-    }
-
-    assert_eq!(path.len(), tiles.len(), "Not a single simple loop");
-    path
 }
 
 /// Checks if the rectangle defined by corners t0 and t1 is strictly contained
@@ -224,29 +160,6 @@ mod tests {
     #[test]
     fn test_part1() -> Result<()> {
         assert_eq!(part1(INPUT)?, 50.to_string());
-        Ok(())
-    }
-
-    #[test]
-    fn test_perimeter() -> Result<()> {
-        let tiles: HashSet<(i64, i64)> = parse_tiles(INPUT)?.into_iter().collect();
-        let perimeter_tiles = sort_perimeter(&tiles);
-
-        // The perimeter algorithm is deterministic
-        assert_eq!(
-            perimeter_tiles,
-            [
-                (7, 1),
-                (7, 3),
-                (2, 3),
-                (2, 5),
-                (9, 5),
-                (9, 7),
-                (11, 7),
-                (11, 1),
-            ]
-        );
-
         Ok(())
     }
 
