@@ -11,7 +11,7 @@ mod day08;
 mod day09;
 mod day10;
 mod day11;
-// mod day12;
+mod day12;
 
 pub fn get_solution(day: u8) -> Option<DailySolutions> {
     match day {
@@ -26,7 +26,7 @@ pub fn get_solution(day: u8) -> Option<DailySolutions> {
         9 => Some((day09::part1, day09::part2)),
         10 => Some((day10::part1, day10::part2)),
         11 => Some((day11::part1, day11::part2)),
-        // 12 => Some((day12::part1, day12::part2)),
+        12 => Some((day12::part1, day12::part2)),
         _ => None,
     }
 }
